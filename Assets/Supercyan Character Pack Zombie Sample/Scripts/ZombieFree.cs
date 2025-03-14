@@ -9,7 +9,8 @@ public class ZombieFree : MonoBehaviour
 
     private void Start()
     {
-        m_animators = FindObjectsOfType<Animator>();
+        ZombieFree[] zombies = Object.FindObjectsByType<ZombieFree>(FindObjectsSortMode.None);
+
     }
 
     private void OnGUI()

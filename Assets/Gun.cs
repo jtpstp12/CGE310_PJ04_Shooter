@@ -111,4 +111,10 @@ public class Gun : MonoBehaviour
             }
         }
     }
+
+    public int GetCurrentAmmo()
+    {
+        return currentAmmo;
+    }
+
 }

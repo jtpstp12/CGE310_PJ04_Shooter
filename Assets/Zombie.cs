@@ -69,6 +69,7 @@ public class ZombieAI : MonoBehaviour
         else
         {
             agent.isStopped = true;
+            agent.velocity = Vector3.zero; // ป้องกันการเลื่อนผิดพลาด
             animator.SetBool("isWalking", false);
 
             if (Time.time >= nextAttackTime)
@@ -110,18 +111,28 @@ public class ZombieAI : MonoBehaviour
 
     void Attack()
     {
-        animator.SetTrigger("Attack");
+        animator.SetTrigger("Attack"); // เล่นอนิเมชันโจมตี
     }
 
-    public void DealDamage()
+    void DealDamage()
     {
         if (player != null && Vector3.Distance(transform.position, player.position) <= attackRange)
         {
-            if (player.TryGetComponent<Health>(out Health health))
+            if (player.TryGetComponent<PlayerHealth>(out PlayerHealth health))
             {
-                health.TakeDamage(attackDamage);
-                Debug.Log("Zombie attacked player!");
+                health.TakeDamage(attackDamage); // ลดเลือดผู้เล่น
+                Debug.Log("Zombie attacked player! Damage: " + attackDamage);
+
+            }
+            else
+            {
+                Debug.Log("PlayerHealth component not found on player!");
             }
         }
+        else
+        {
+            Debug.Log("Player is out of attack range!");
+        }
     }
+
 }
