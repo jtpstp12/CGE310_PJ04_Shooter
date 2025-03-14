@@ -64,15 +64,18 @@ public class Gun : MonoBehaviour
 
     void Shoot()
     {
-        muzzleFlash.Play(); // ‡≈Ëπ‡Õø‡ø°µÏª◊π
+        if (muzzleFlash != null)
+            muzzleFlash.Play();
+
+        if (animator != null)
+            animator.SetTrigger("Gunrecoil"); // ‡≈Ëπ Animation ·√ß¥’¥
+
         RaycastHit hit;
-
         currentAmmo--;
-
 
         if (Physics.Raycast(fpsCam.transform.position, fpsCam.transform.forward, out hit, range))
         {
-            Debug.Log(hit.transform.name);
+            Debug.Log("Hit: " + hit.transform.name);
 
             Target target = hit.transform.GetComponent<Target>();
             if (target != null)
@@ -80,7 +83,8 @@ public class Gun : MonoBehaviour
                 target.TakeDamage(damage);
             }
 
-            Instantiate(impactEffect, hit.point, Quaternion.LookRotation(hit.normal));
+            if (impactEffect != null)
+                Instantiate(impactEffect, hit.point, Quaternion.LookRotation(hit.normal));
         }
     }
 }
