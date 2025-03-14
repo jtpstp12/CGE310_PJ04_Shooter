@@ -16,6 +16,14 @@ public class GameManager : MonoBehaviour
     private int killCount = 0;
     private bool isGameActive = true;
 
+
+    void Start()
+    {
+        // ซ่อน Cursor และล็อกไว้ที่กลางจอ
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
+    }
+
     void Awake()
     {
         if (instance == null)
@@ -53,23 +61,22 @@ public class GameManager : MonoBehaviour
     public void GameOver()
     {
         isGameActive = false;
-
-        // แสดงหน้าต่าง Game Over
         gameOverPanel.SetActive(true);
 
+        // ปลดล็อก Cursor ให้ผู้เล่นสามารถใช้เมาส์ได้
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+
         // ปิดการควบคุมของผู้เล่น
-        StarterAssets.FirstPersonController player = Object.FindFirstObjectByType<StarterAssets.FirstPersonController>();
-
-
-
+        StarterAssets.FirstPersonController player = FindObjectOfType<StarterAssets.FirstPersonController>();
         if (player != null)
         {
             player.enabled = false;
         }
 
-        // หยุดเวลา
-        Time.timeScale = 0f;
+        Time.timeScale = 0f; // หยุดเวลา
     }
+
 
     public void RestartGame()
     {

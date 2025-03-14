@@ -112,7 +112,14 @@ public class ZombieAI : MonoBehaviour
     void Attack()
     {
         animator.SetTrigger("Attack"); // เล่นอนิเมชันโจมตี
+        Invoke("ResetAttackTrigger", 0.5f); // รีเซ็ตทริกเกอร์หลังจากเล่นไปครึ่งวินาที
     }
+
+    void ResetAttackTrigger()
+    {
+        animator.ResetTrigger("Attack");
+    }
+
 
     void DealDamage()
     {
