@@ -7,90 +7,66 @@ public class ZombieAI : MonoBehaviour
     public float attackDamage = 10f;
     public float attackRange = 1.5f;
     public float attackCooldown = 1.5f;
-    public float chaseRange = 10f;
-    public float patrolRadius = 15f;
-    public float patrolWaitTime = 3f;
+    public float detectionRange = 10f;  // ระยะที่ซอมบี้เห็นผู้เล่น
+    public float roamRadius = 5f; // รัศมีที่เดินสุ่มได้
+    public float roamCooldown = 3f; // เวลาหยุดพักระหว่างเดินสุ่ม
 
     private Transform player;
     private NavMeshAgent agent;
     private Animator animator;
     private float nextAttackTime = 0f;
+    private float nextRoamTime = 0f;
     private ZombieHealth zombieHealth;
-
-    private bool isPatrolling = true;
-    private Vector3 patrolDestination;
-    private float patrolTimer = 0f;
+    private bool isChasing = false;
 
     void Start()
     {
         agent = GetComponent<NavMeshAgent>();
         animator = GetComponent<Animator>();
-        player = GameObject.FindWithTag("Player").transform;
+        player = GameObject.FindWithTag("Player")?.transform;
         agent.speed = moveSpeed;
         zombieHealth = GetComponent<ZombieHealth>();
-
-        SetNewPatrolDestination(); // เริ่มต้นตั้งจุด Patrol
     }
 
     void Update()
     {
-        if (!player || zombieHealth == null || zombieHealth.isDead) return; // ถ้า Zombie ตายแล้วไม่ทำงาน
+        if (!player || zombieHealth == null || zombieHealth.isDead) return;
 
-        float distanceToPlayer = Vector3.Distance(transform.position, player.position);
+        float distance = Vector3.Distance(transform.position, player.position);
 
-        // ถ้าเจอผู้เล่นในระยะ ไล่ล่า
-        if (distanceToPlayer <= chaseRange)
+        if (distance <= detectionRange)
         {
-            ChasePlayer(distanceToPlayer);
+            isChasing = true;
+        }
+        else if (distance > detectionRange && isChasing)
+        {
+            isChasing = false;
+            nextRoamTime = Time.time + roamCooldown; // เริ่มจับเวลาเดินสุ่มอีกครั้ง
+        }
+
+        if (isChasing)
+        {
+            ChasePlayer();
         }
         else
         {
-            Patrol();
+            RoamAround();
         }
     }
 
-    void Patrol()
+    void ChasePlayer()
     {
-        isPatrolling = true;
-        animator.SetBool("isWalking", true);
+        if (player == null) return;
 
-        if (Vector3.Distance(transform.position, patrolDestination) <= 1f)
-        {
-            patrolTimer += Time.deltaTime;
+        float distance = Vector3.Distance(transform.position, player.position);
 
-            if (patrolTimer >= patrolWaitTime)
-            {
-                SetNewPatrolDestination();
-                patrolTimer = 0f;
-            }
-        }
-        else
+        if (distance > attackRange)
         {
-            agent.SetDestination(patrolDestination);
+            agent.SetDestination(player.position);
             agent.isStopped = false;
+            animator.SetBool("isWalking", true);
         }
-    }
-
-    void SetNewPatrolDestination()
-    {
-        Vector3 randomDirection = Random.insideUnitSphere * patrolRadius;
-        randomDirection += transform.position;
-
-        NavMeshHit hit;
-        if (NavMesh.SamplePosition(randomDirection, out hit, patrolRadius, 1))
-        {
-            patrolDestination = hit.position;
-        }
-    }
-
-    void ChasePlayer(float distanceToPlayer)
-    {
-        isPatrolling = false;
-        agent.SetDestination(player.position);
-        agent.isStopped = false;
-        animator.SetBool("isWalking", true);
-
-        if (distanceToPlayer <= attackRange)
+        else
         {
             agent.isStopped = true;
             animator.SetBool("isWalking", false);
@@ -103,12 +79,40 @@ public class ZombieAI : MonoBehaviour
         }
     }
 
-    void Attack()
+    void RoamAround()
     {
-        animator.SetTrigger("Attack"); // Animation โจมตี
+        if (Time.time >= nextRoamTime && !agent.pathPending && agent.remainingDistance <= 0.5f)
+        {
+            Vector3 newDestination = GetRandomPoint(transform.position, roamRadius);
+            agent.SetDestination(newDestination);
+            agent.isStopped = false;
+            animator.SetBool("isWalking", true);
+            nextRoamTime = Time.time + roamCooldown;
+        }
+        else if (agent.remainingDistance <= 0.5f)
+        {
+            animator.SetBool("isWalking", false); // เปลี่ยนเป็น Idle
+        }
     }
 
-    // เรียกจาก Animation Event เพื่อทำ Damage
+    Vector3 GetRandomPoint(Vector3 origin, float radius)
+    {
+        Vector2 randomDirection = Random.insideUnitCircle * radius;
+        Vector3 randomPoint = new Vector3(origin.x + randomDirection.x, origin.y, origin.z + randomDirection.y);
+
+        if (NavMesh.SamplePosition(randomPoint, out NavMeshHit hit, radius, NavMesh.AllAreas))
+        {
+            return hit.position;
+        }
+
+        return origin;
+    }
+
+    void Attack()
+    {
+        animator.SetTrigger("Attack");
+    }
+
     public void DealDamage()
     {
         if (player != null && Vector3.Distance(transform.position, player.position) <= attackRange)
