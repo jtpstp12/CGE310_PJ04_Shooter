@@ -13,6 +13,8 @@ public class Gun : MonoBehaviour
     public float reloadTime = 1f;
     private bool isReloading = false;
 
+    public Animator animator;
+
     public Camera fpsCam;
     public ParticleSystem muzzleFlash;
     public GameObject impactEffect;
@@ -49,7 +51,11 @@ public class Gun : MonoBehaviour
         isReloading = true;
         Debug.Log("Reloading...");
 
+        animator.SetBool("Reloading", true);
+
         yield return new WaitForSeconds(reloadTime);
+
+        animator.SetBool("Reloading", false);
 
         currentAmmo = maxAmmo;
         isReloading = false;
