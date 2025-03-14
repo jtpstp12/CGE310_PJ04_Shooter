@@ -6,6 +6,9 @@ TagManager:
   tags:
   - CinemachineTarget
   - Zombie
+  - FxTemporaire
+  - Fire
+  - Weapon
   layers:
   - Default
   - TransparentFX

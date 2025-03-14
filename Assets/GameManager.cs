@@ -3,6 +3,7 @@ using TMPro;
 using UnityEngine.SceneManagement; // ใช้สำหรับ Restart Scene
 using StarterAssets; // เพิ่มบรรทัดนี้
 
+
 public class GameManager : MonoBehaviour
 {
     public static GameManager instance;
@@ -40,7 +41,7 @@ public class GameManager : MonoBehaviour
     {
         int minutes = Mathf.FloorToInt(elapsedTime / 60);
         int seconds = Mathf.FloorToInt(elapsedTime % 60);
-        timerText.text = string.Format("Time: {0:00}:{1:00}", minutes, seconds);
+        timerText.text = string.Format("{0:00}:{1:00}", minutes, seconds);
     }
 
     public void AddKill()

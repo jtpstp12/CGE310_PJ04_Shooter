@@ -35,7 +35,11 @@ public class ZombieHealth : MonoBehaviour
     // ฟังก์ชันตาย
     void Die()
     {
+        if (isDead) return; // ป้องกันการตายซ้ำซ้อน
         isDead = true;
+
+        // แจ้ง GameManager ว่าฆ่าซอมบี้สำเร็จ
+        GameManager.instance.AddKill();
 
         // หยุด AI
         if (agent != null)
@@ -59,7 +63,7 @@ public class ZombieHealth : MonoBehaviour
         Collider col = GetComponent<Collider>();
         if (col != null) col.enabled = false;
 
-        // ทำลาย Zombie หลัง 10 วินาที (หรือลบออกได้)
+        // ทำลาย Zombie หลัง 10 วินาที
         Destroy(gameObject, 10f);
     }
 }

@@ -37,6 +37,20 @@ public class PlayerHealth : MonoBehaviour
     void Die()
     {
         Debug.Log("Player Dead!");
+
+        // ทำลายอาวุธของผู้เล่น
+        GameObject weapon = GameObject.FindGameObjectWithTag("Weapon");
+        if (weapon != null)
+        {
+            Destroy(weapon);
+        }
+
+        // แสดง Cursor ของเมาส์
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+
+        // เรียก Game Over จาก GameManager
         GameManager.instance.GameOver();
     }
+
 }
