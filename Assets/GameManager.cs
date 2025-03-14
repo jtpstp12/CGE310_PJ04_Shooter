@@ -1,27 +1,32 @@
 ﻿using UnityEngine;
 using TMPro;
-using UnityEngine.SceneManagement; // ใช้สำหรับ Restart Scene
-using StarterAssets; // เพิ่มบรรทัดนี้
-
+using UnityEngine.SceneManagement;
+using StarterAssets;
 
 public class GameManager : MonoBehaviour
 {
     public static GameManager instance;
 
-    public GameObject gameOverPanel; // ลาก GameOverPanel เข้าไปใน Inspector
+    public event System.Action OnGameEnd; // Event ที่ใช้แจ้งว่าจบเกม
+
+    public GameObject gameOverPanel;
+    public GameObject finishGamePanel; // UI เมื่อจบเกม
     public TextMeshProUGUI timerText;
     public TextMeshProUGUI killCountText;
+    public TextMeshProUGUI finishTimeText;
+    public TextMeshProUGUI bestTimeText;
 
     private float elapsedTime = 0f;
     private int killCount = 0;
     private bool isGameActive = true;
-
+    public int killTarget = 10; // จำนวนศัตรูที่ต้องฆ่าก่อนจบเกม
+    private float bestTime;
 
     void Start()
     {
-        // ซ่อน Cursor และล็อกไว้ที่กลางจอ
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
+        bestTime = PlayerPrefs.GetFloat("BestTime", float.MaxValue);
     }
 
     void Awake()
@@ -56,31 +61,62 @@ public class GameManager : MonoBehaviour
     {
         killCount++;
         killCountText.text = "Kills: " + killCount;
+
+        if (killCount >= killTarget) // เช็คว่าฆ่าถึงเป้าหมายหรือยัง
+        {
+            FinishGame();
+        }
     }
 
     public void GameOver()
     {
         isGameActive = false;
         gameOverPanel.SetActive(true);
-
-        // ปลดล็อก Cursor ให้ผู้เล่นสามารถใช้เมาส์ได้
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
 
-        // ปิดการควบคุมของผู้เล่น
         StarterAssets.FirstPersonController player = FindObjectOfType<StarterAssets.FirstPersonController>();
         if (player != null)
         {
             player.enabled = false;
         }
 
-        Time.timeScale = 0f; // หยุดเวลา
+        Time.timeScale = 0f;
+        OnGameEnd?.Invoke(); // แจ้ง event ว่าเกมจบแล้ว
     }
 
+    public void FinishGame()
+    {
+        isGameActive = false;
+        finishGamePanel.SetActive(true);
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+
+        StarterAssets.FirstPersonController player = FindObjectOfType<StarterAssets.FirstPersonController>();
+        if (player != null)
+        {
+            player.enabled = false;
+        }
+
+        Time.timeScale = 0f;
+
+        finishTimeText.text = "Your Time: " + timerText.text;
+
+        if (elapsedTime < bestTime)
+        {
+            bestTime = elapsedTime;
+            PlayerPrefs.SetFloat("BestTime", bestTime);
+            PlayerPrefs.Save();
+        }
+
+        bestTimeText.text = "Best Time: " + string.Format("{0:00}:{1:00}", Mathf.FloorToInt(bestTime / 60), Mathf.FloorToInt(bestTime % 60));
+
+        OnGameEnd?.Invoke(); // แจ้ง event ว่าเกมจบแล้ว
+    }
 
     public void RestartGame()
     {
-        Time.timeScale = 1f; // คืนค่าเวลา
-        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex); // โหลดฉากใหม่
+        Time.timeScale = 1f;
+        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
     }
 }

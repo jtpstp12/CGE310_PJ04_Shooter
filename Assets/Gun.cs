@@ -22,28 +22,33 @@ public class Gun : MonoBehaviour
     void Start()
     {
         currentAmmo = maxAmmo;
+
+        // สมัคร event OnGameEnd เพื่อปิดปืนเมื่อเกมจบ
+        GameManager.instance.OnGameEnd += DisableGun;
+    }
+
+    void OnDestroy()
+    {
+        if (GameManager.instance != null)
+            GameManager.instance.OnGameEnd -= DisableGun;
     }
 
     void Update()
     {
-        // ถ้า reload อยู่ให้ return ออกไปก่อน
         if (isReloading) return;
 
-        // ถ้ากระสุนหมด reload อัตโนมัติ
         if (currentAmmo <= 0)
         {
             StartCoroutine(Reload());
             return;
         }
 
-        // ถ้ากดปุ่ม R และกระสุนยังไม่เต็ม ให้ reload ด้วย
         if (Input.GetKeyDown(KeyCode.R) && currentAmmo < maxAmmo)
         {
             StartCoroutine(Reload());
             return;
         }
 
-        // ยิงปืน
         if (Input.GetButton("Fire1") && Time.time >= nextTimeToFire)
         {
             nextTimeToFire = Time.time + fireRate;
@@ -51,53 +56,44 @@ public class Gun : MonoBehaviour
         }
     }
 
-    // Coroutine สำหรับ reload
     IEnumerator Reload()
     {
         isReloading = true;
         Debug.Log("Reloading...");
 
-        // เล่น animation reload
         if (animator != null)
-            animator.SetBool("Reloading", true); // เปิดอนิเมชั่น reload
+            animator.SetBool("Reloading", true);
 
-        // รอเวลาตาม reloadTime
         yield return new WaitForSeconds(reloadTime);
 
-        // หยุด animation reload
         if (animator != null)
-            animator.SetBool("Reloading", false); // ปิดอนิเมชั่น reload
+            animator.SetBool("Reloading", false);
 
-        // เติมกระสุนใหม่
         currentAmmo = maxAmmo;
         isReloading = false;
     }
 
-    // ฟังก์ชันยิง
     void Shoot()
     {
         if (muzzleFlash != null)
             muzzleFlash.Play();
 
         if (animator != null)
-            animator.SetTrigger("Gunrecoil"); // เล่นอนิเมชั่น recoil
+            animator.SetTrigger("Gunrecoil");
 
         RaycastHit hit;
-        currentAmmo--; // ลดกระสุน
+        currentAmmo--;
 
-        // Ray ยิงออกไป
         if (Physics.Raycast(fpsCam.transform.position, fpsCam.transform.forward, out hit, range))
         {
             Debug.Log("Hit: " + hit.transform.name);
 
-            // ถ้าโดน Zombie
             ZombieHealth zombieHealth = hit.transform.GetComponent<ZombieHealth>();
             if (zombieHealth != null)
             {
                 zombieHealth.TakeDamage(damage);
             }
 
-            // Effect โดน Zombie
             if (hit.transform.CompareTag("Zombie"))
             {
                 if (zombieImpactEffect != null)
@@ -105,7 +101,6 @@ public class Gun : MonoBehaviour
             }
             else
             {
-                // Effect โดนพื้น/กำแพง
                 if (impactEffect != null)
                     Instantiate(impactEffect, hit.point, Quaternion.LookRotation(hit.normal));
             }
@@ -117,4 +112,8 @@ public class Gun : MonoBehaviour
         return currentAmmo;
     }
 
+    void DisableGun()
+    {
+        gameObject.SetActive(false); // ปิดปืนเมื่อเกมจบ
+    }
 }
